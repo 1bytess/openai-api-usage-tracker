@@ -7,7 +7,8 @@ async function getCloudflareEnv(): Promise<Record<string, string> | undefined> {
   try {
     // Only import if we're in a Cloudflare Pages environment
     if (process.env.CF_PAGES) {
-      // @ts-expect-error - Dynamic import for Cloudflare Pages, may not be available in all environments
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore - Dynamic import for Cloudflare Pages, may not be available in all environments
       const { getRequestContext } = await import("@cloudflare/next-on-pages");
       return getRequestContext?.().env as Record<string, string> | undefined;
     }
