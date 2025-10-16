@@ -3,7 +3,11 @@
     "allow": [
       "Bash(if not exist \"C:\\Users\\micro\\Documents\\personal_projects\\Website\\openai-usage-tracker\\src\\lib\" mkdir \"C:\\Users\\micro\\Documents\\personal_projects\\Website\\openai-usage-tracker\\src\\lib\")",
       "Bash(if exist \"C:\\Users\\micro\\Documents\\personal_projects\\Website\\openai-usage-tracker\\src\\app\\api\\mappings\" rmdir /s /q \"C:\\Users\\micro\\Documents\\personal_projects\\Website\\openai-usage-tracker\\src\\app\\api\\mappings\")",
-      "Read(//c/Users/micro/Documents/personal_projects/Website/demolab-website-v2/**)"
+      "Read(//c/Users/micro/Documents/personal_projects/Website/demolab-website-v2/**)",
+      "Bash(git commit:*)",
+      "Bash(git push)",
+      "Bash(git add:*)",
+      "Bash(if not exist \"public\" mkdir \"public\")"
     ],
     "deny": [],
     "ask": []
