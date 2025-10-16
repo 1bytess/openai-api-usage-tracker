@@ -1,7 +1,21 @@
 import { NextResponse } from "next/server";
-import { getRequestContext } from "@cloudflare/next-on-pages";
 
 export const runtime = 'edge';
+
+// Dynamically import Cloudflare context only when available
+async function getCloudflareEnv(): Promise<Record<string, string> | undefined> {
+  try {
+    // Only import if we're in a Cloudflare Pages environment
+    if (process.env.CF_PAGES) {
+      // @ts-expect-error - Dynamic import for Cloudflare Pages, may not be available in all environments
+      const { getRequestContext } = await import("@cloudflare/next-on-pages");
+      return getRequestContext?.().env as Record<string, string> | undefined;
+    }
+  } catch {
+    // Silently fail if module not available
+  }
+  return undefined;
+}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -20,9 +34,7 @@ export async function GET(request: Request) {
 
   // Read the admin key from Cloudflare Pages bindings when on Pages,
   // and fall back to process.env for local/dev.
-  const cfEnv = (getRequestContext?.().env ?? undefined) as
-    | Record<string, string>
-    | undefined;
+  const cfEnv = await getCloudflareEnv();
   const apiKey = cfEnv?.OPENAI_ADMIN_KEY ?? process.env.OPENAI_ADMIN_KEY;
 
   if (!apiKey) {
