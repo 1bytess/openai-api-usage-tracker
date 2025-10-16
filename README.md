@@ -1,25 +1,58 @@
-OpenAI Usage Tracker (Next.js)
+<h1 align="center">OpenAI API Usage Tracker</h1>
 
-A beautiful, secure web app to track OpenAI API usage per user/API key and by model tiers (Mini/Nano 2.5M tokens, Base/Pro 250K tokens). Simple JSON-based configuration for easy management.
+<p align="center">
+  <strong>Monitor OpenAI API usage and free credit limits with a beautiful, responsive dashboard</strong>
+</p>
 
-## Features
+<p align="center">
+  <img src="demo.gif" alt="OpenAI Usage Tracker Demo" width="800">
+</p>
 
-- Real-time OpenAI usage tracking by user and model
-- Simple JSON file configuration for API key mappings
-- Dark mode UI with responsive design
-- Track usage against free tier limits (Mini/Nano: 2.5M tokens/day, Base/Pro: 250K tokens/day)
-- Secure server routes that proxy calls to the OpenAI Organization Usage API
-- Zero secrets committed to Git - all sensitive data in environment variables
+<p align="center">
+  <a href="#features">Features</a> •
+  <a href="#quick-start">Quick Start</a> •
+  <a href="#docker-deployment">Docker</a> •
+  <a href="#configuration">Configuration</a> •
+  <a href="#deployment">Deployment</a>
+</p>
 
-## Quick Start
+---
 
-1) Install deps
+## 🚀 Features
+
+- **📊 Real-time Usage Tracking** - Monitor OpenAI API usage by user, API key, and model
+- **🎯 Tier Management** - Track usage against free tier limits (Mini/Nano: 2.5M tokens/day, Base/Pro: 250K tokens/day)
+- **👥 User Management** - Simple JSON-based configuration for API key-to-user mappings
+- **🎨 Modern UI** - Dark mode interface with responsive design built on Next.js 15 and React 19
+- **🔒 Secure by Design** - Server-side API proxy ensures admin keys never reach the client
+- **🐳 Docker Ready** - One-command deployment with Docker and Docker Compose
+- **⚡ Fast Performance** - Built with Next.js Turbopack for optimal speed
+
+## 📋 Prerequisites
+
+- Node.js 18+ (or Docker)
+- OpenAI Organization Admin API Key
+- Your OpenAI API Key IDs for tracking
+
+## 🏃 Quick Start
+
+### Option 1: Local Development
+
+**1. Clone the repository**
+```bash
+git clone https://github.com/yourusername/openai-usage-tracker.git
+cd openai-usage-tracker
+```
+
+**2. Install dependencies**
 ```bash
 npm install
 ```
 
-2) Configure API key mappings
-Edit `src/lib/apiKeyMappings.json` to add your API key IDs and usernames:
+**3. Configure API key mappings**
+
+Edit `src/lib/apiKeyMappings.json` to map your API key IDs to user names:
+
 ```json
 {
   "key_abc123xyz": "John Doe",
@@ -27,30 +60,68 @@ Edit `src/lib/apiKeyMappings.json` to add your API key IDs and usernames:
 }
 ```
 
-3) Configure environment
+> 💡 Find your API key IDs in the [OpenAI Dashboard](https://platform.openai.com/api-keys) under API keys (format: `key_` followed by alphanumeric characters)
+
+**4. Set up environment variables**
 ```bash
 cp .env.example .env
-# Edit .env and set OPENAI_ADMIN_KEY
 ```
 
-4) Run
+Edit `.env` and add your OpenAI Admin API key:
+```env
+OPENAI_ADMIN_KEY=your_openai_admin_key_here
+```
+
+**5. Run the development server**
 ```bash
 npm run dev
 ```
 
-Open http://localhost:3000
+**6. Open your browser**
+```
+http://localhost:3000
+```
 
-## API Endpoints
+### Option 2: Docker Deployment 🐳 {#docker-deployment}
 
-- `GET /api/usage?start_time=<unix>&end_time=<unix>&bucket_width=1d&group_by=api_key_id` - Fetch usage data from OpenAI
-- `GET /api/health` - Health check
+**Quick start with Docker Compose:**
 
-**Security Notes:**
-- Only server routes access `OPENAI_ADMIN_KEY`; the key is never exposed to the client
-- `group_by` supports `api_key_id`, `model`, or `none`
-- `bucket_width`: `1m`, `1h`, `1d` (sets safe `limit` defaults to avoid API caps)
+```bash
+# Clone and navigate to the project
+git clone https://github.com/yourusername/openai-usage-tracker.git
+cd openai-usage-tracker
 
-## Configuration
+# Configure your API key mappings
+# Edit src/lib/apiKeyMappings.json
+
+# Set up environment variables
+cp .env.example .env
+# Edit .env and add your OPENAI_ADMIN_KEY
+
+# Build and run
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+```
+
+The application will be available at `http://localhost:3000`
+
+**Docker commands:**
+```bash
+# Stop the application
+docker-compose down
+
+# Rebuild after code changes
+docker-compose up -d --build
+
+# View logs
+docker-compose logs -f app
+```
+
+## ⚙️ Configuration
+
+### API Key Mappings
 
 API key mappings are stored in `src/lib/apiKeyMappings.json`:
 
@@ -63,34 +134,67 @@ API key mappings are stored in `src/lib/apiKeyMappings.json`:
 }
 ```
 
-## Deployment
+**To add or remove users:**
 
-### Option A: Vercel (Easiest)
+1. Edit `src/lib/apiKeyMappings.json`
+2. Add/remove key-to-username mappings
+3. Ensure valid JSON (no trailing commas, proper quotes)
+4. Restart the application or redeploy
 
-1. Push to GitHub
-2. Go to [vercel.com/new](https://vercel.com/new)
-3. Import repository
-4. Add environment variable: `OPENAI_ADMIN_KEY`
-5. Deploy
+### Environment Variables
 
-### Option B: Cloudflare Pages (Recommended for this project)
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `OPENAI_ADMIN_KEY` | OpenAI Organization Admin API Key | ✅ Yes |
 
-The project includes `wrangler.toml` configured for Cloudflare Pages.
+### Customization
 
-**Quick Deploy:**
+- **Tier Limits**: Adjust in `src/app/page.tsx:123-124`
+- **UI Styles**: Modify `src/app/globals.css` or component classes
+- **Model Categorization**: Update logic in `src/app/page.tsx:138-148`
 
-1. Install dependencies:
-```bash
-npm install --save-dev @cloudflare/next-on-pages wrangler
-```
+## 🌐 API Endpoints
 
-2. Push to GitHub and connect via Cloudflare Pages dashboard:
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/usage` | GET | Fetch usage data from OpenAI |
+| `/api/health` | GET | Health check endpoint |
+
+**Query Parameters for `/api/usage`:**
+- `start_time` - Unix timestamp (required)
+- `end_time` - Unix timestamp (required)
+- `bucket_width` - Time bucket: `1m`, `1h`, or `1d` (default: `1d`)
+- `group_by` - Grouping: `api_key_id`, `model`, or `none` (default: `api_key_id`)
+
+**Security Notes:**
+- ✅ Admin API key stored server-side only
+- ✅ Never exposed to client
+- ✅ Secure proxy pattern for OpenAI API calls
+
+## 🚀 Deployment
+
+### Vercel (Recommended)
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new)
+
+1. Push your repository to GitHub
+2. Import to [Vercel](https://vercel.com/new)
+3. Add environment variable: `OPENAI_ADMIN_KEY`
+4. Deploy
+
+### Cloudflare Pages
+
+The project includes `wrangler.toml` for Cloudflare Pages deployment.
+
+**Dashboard Deployment:**
+1. Connect repository in [Cloudflare Pages](https://dash.cloudflare.com/pages)
+2. Configure:
    - Framework: **Next.js**
    - Build command: `npx @cloudflare/next-on-pages`
    - Build output: `.vercel/output/static`
-   - Add environment variable: `OPENAI_ADMIN_KEY`
+3. Add environment variable: `OPENAI_ADMIN_KEY`
 
-**Or deploy via CLI:**
+**CLI Deployment:**
 ```bash
 # Build for Cloudflare
 npx @cloudflare/next-on-pages
@@ -102,42 +206,98 @@ npx wrangler pages deploy .vercel/output/static --project-name=openai-usage-trac
 npx wrangler pages secret put OPENAI_ADMIN_KEY --project-name=openai-usage-tracker
 ```
 
-**Local Cloudflare dev:**
+**Local Cloudflare Development:**
 ```bash
 npm run pages:build
 npm run pages:dev
 ```
 
-### Option C: Netlify
+### Netlify
 
-1. Push to GitHub
-2. Connect via [Netlify](https://app.netlify.com)
-3. Build command: `npm run build`
-4. Publish directory: `.next`
-5. Add environment variable: `OPENAI_ADMIN_KEY`
+1. Connect repository to [Netlify](https://app.netlify.com)
+2. Configure:
+   - Build command: `npm run build`
+   - Publish directory: `.next`
+3. Add environment variable: `OPENAI_ADMIN_KEY`
 
-## Managing API Key Mappings
+### Docker Production Deployment
 
-To add or remove users:
-
-1. Edit `src/lib/apiKeyMappings.json` and add/remove mappings:
-```json
-{
-  "key_abc123xyz": "John Doe",
-  "key_def456abc": "Jane Smith"
-}
+**Using Docker Compose:**
+```bash
+docker-compose -f docker-compose.yml up -d
 ```
 
-2. Commit and push changes to trigger automatic redeployment (if using CI/CD)
+**Manual Docker:**
+```bash
+# Build
+docker build -t openai-usage-tracker .
 
-**Tips:**
-- Find your API key IDs in your OpenAI dashboard under API keys
-- The format is always `key_` followed by alphanumeric characters
-- Make sure the JSON is valid (no trailing commas, proper quotes)
+# Run
+docker run -d \
+  -p 3000:3000 \
+  -e OPENAI_ADMIN_KEY=your_key_here \
+  -v $(pwd)/src/lib/apiKeyMappings.json:/app/src/lib/apiKeyMappings.json \
+  --name openai-tracker \
+  openai-usage-tracker
+```
 
-## Customize
+## 🛠️ Tech Stack
 
-- API key mappings are stored in `src/lib/apiKeyMappings.json`
-- Adjust tier limits in `src/app/page.tsx:123-124` (nano_mini and base_pro limits)
-- Modify UI styles in `src/app/globals.css` or component classes
-- Update model categorization logic in `src/app/page.tsx:138-148` to match your model usage
+- **Framework**: Next.js 15 with Turbopack
+- **Runtime**: React 19
+- **Styling**: Tailwind CSS
+- **Icons**: Lucide React
+- **Language**: TypeScript
+- **Deployment**: Docker, Vercel, Cloudflare Pages, Netlify
+
+## 📁 Project Structure
+
+```
+openai-usage-tracker/
+├── src/
+│   ├── app/
+│   │   ├── api/
+│   │   │   ├── health/         # Health check endpoint
+│   │   │   └── usage/          # Usage data proxy endpoint
+│   │   ├── globals.css         # Global styles
+│   │   ├── layout.tsx          # Root layout
+│   │   └── page.tsx            # Main dashboard
+│   └── lib/
+│       ├── apiKeyMappings.json # API key to user mappings
+│       └── apiKeys.ts          # API key utilities
+├── docker-compose.yml          # Docker Compose configuration
+├── Dockerfile                  # Docker build instructions
+├── .dockerignore              # Docker ignore patterns
+└── README.md                  # This file
+```
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📝 License
+
+This project is open source and available under the [MIT License](LICENSE).
+
+## 🙏 Acknowledgments
+
+- Built with [Next.js](https://nextjs.org/)
+- Icons by [Lucide](https://lucide.dev/)
+- Powered by [OpenAI API](https://platform.openai.com/)
+
+## 📞 Support
+
+If you encounter any issues or have questions:
+- Open an [Issue](https://github.com/yourusername/openai-usage-tracker/issues)
+- Check existing issues for solutions
+- Contribute to discussions
+
+---
+
+<p align="center">Made with ❤️ for the OpenAI community</p>

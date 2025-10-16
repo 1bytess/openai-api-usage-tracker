@@ -218,7 +218,7 @@ export default function Home() {
 
   const getModelTierUsage = (): { nano_mini: TierUsage; base_pro: TierUsage } => {
     const tierUsage = {
-      nano_mini: { used: 0, limit: 2500000, models: {} as Record<string, number> },
+      nano_mini: { used: 0, limit: 1000000, models: {} as Record<string, number> },
       base_pro: { used: 0, limit: 250000, models: {} as Record<string, number> }
     };
 
@@ -446,7 +446,7 @@ export default function Home() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           {/* Nano/Mini Tier */}
           <div className="bg-gray-800 border border-gray-700 rounded-lg p-6">
-            <h3 className="text-xl font-semibold mb-4 text-green-400">Mini/Nano Tier (Free 2.5M Tokens/Day)</h3>
+            <h3 className="text-xl font-semibold mb-4 text-green-400">Mini/Nano Tier (Free 1M Tokens/Day)</h3>
             <div className="mb-4">
               <div className="flex justify-between mb-2">
                 <span className="text-gray-400">Usage</span>
