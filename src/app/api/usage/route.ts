@@ -17,7 +17,17 @@ export async function GET(request: Request) {
 
   const limit = searchParams.get("limit") || defaultLimit;
 
-  const apiKey = process.env.OPENAI_ADMIN_KEY;
+  // Read the admin key from Cloudflare Pages bindings when on Pages,
+  // and fall back to process.env for local/dev.
+  let apiKey: string | undefined;
+  try {
+    const mod: any = await import("@cloudflare/next-on-pages");
+    const env = (mod?.getRequestContext?.().env ?? {}) as Record<string, string>;
+    apiKey = env.OPENAI_ADMIN_KEY;
+  } catch {}
+  if (!apiKey && typeof process !== "undefined") {
+    apiKey = (process as any).env?.OPENAI_ADMIN_KEY;
+  }
 
   if (!apiKey) {
     return NextResponse.json(
