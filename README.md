@@ -40,7 +40,7 @@
 
 **1. Clone the repository**
 ```bash
-git clone https://github.com/yourusername/openai-usage-tracker.git
+git clone https://github.com/1bytess/openai-usage-tracker.git
 cd openai-usage-tracker
 ```
 
@@ -88,7 +88,7 @@ http://localhost:3000
 
 ```bash
 # Clone and navigate to the project
-git clone https://github.com/yourusername/openai-usage-tracker.git
+git clone https://github.com/1bytess/openai-usage-tracker.git
 cd openai-usage-tracker
 
 # Configure your API key mappings
@@ -294,7 +294,7 @@ This project is open source and available under the [MIT License](LICENSE).
 ## 📞 Support
 
 If you encounter any issues or have questions:
-- Open an [Issue](https://github.com/yourusername/openai-usage-tracker/issues)
+- Open an [Issue](https://github.com/1bytess/openai-usage-tracker/issues)
 - Check existing issues for solutions
 - Contribute to discussions
 
