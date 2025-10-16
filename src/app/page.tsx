@@ -79,7 +79,6 @@ export default function Home() {
     const [year, month, day] = selectedDate.split('-').map(Number);
     const daysInMonth = getDaysInMonth(year, month - 1);
     const firstDay = getFirstDayOfMonth(year, month - 1);
-    const today = new Date();
     const todayStr = getTodayDate();
 
     const days = [];
