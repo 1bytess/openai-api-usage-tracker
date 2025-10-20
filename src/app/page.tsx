@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { RefreshCw, AlertCircle, TrendingUp, Activity, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
-import { getUserName } from '@/lib/apiKeys';
+import { getUserName, refreshMappingsCache } from '@/lib/apiKeys';
 import ApiKeyMappingManager from '@/components/ApiKeyMappingManager';
 
 // TypeScript interfaces
@@ -140,11 +140,24 @@ export default function Home() {
     }
   };
 
-  const fetchUsage = async () => {
+  const fetchUsage = async (forceCacheRefresh = false) => {
     setLoading(true);
     setError(null);
 
     try {
+      // If forceCacheRefresh is true, force reload mappings from API
+      if (forceCacheRefresh) {
+        try {
+          const mappingsResponse = await fetch('/api/mappings', { cache: 'no-store' });
+          if (mappingsResponse.ok) {
+            // This will update the client-side cache in apiKeys.ts
+            await mappingsResponse.json();
+          }
+        } catch {
+          // Silently fail, will use existing cache
+        }
+      }
+
       // Parse selected date and get start/end times for that day
       const date = new Date(selectedDate);
       const startTime = Math.floor(date.setHours(0, 0, 0, 0) / 1000);
@@ -170,6 +183,13 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleMappingUpdate = async () => {
+    // Force refresh mappings cache
+    await refreshMappingsCache();
+    // Reload usage data to show updated user names
+    fetchUsage(true);
   };
 
   useEffect(() => {
@@ -388,7 +408,7 @@ export default function Home() {
 
             {/* Refresh Button */}
             <button
-              onClick={fetchUsage}
+              onClick={() => fetchUsage()}
               disabled={loading}
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -399,7 +419,7 @@ export default function Home() {
         </div>
 
         {/* API Key Mapping Manager */}
-        <ApiKeyMappingManager />
+        <ApiKeyMappingManager onMappingUpdate={handleMappingUpdate} />
 
         {/* Error Display */}
         {error && (

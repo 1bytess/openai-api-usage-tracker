@@ -7,7 +7,11 @@ interface ApiKeyMapping {
   [key: string]: string;
 }
 
-export default function ApiKeyMappingManager() {
+interface ApiKeyMappingManagerProps {
+  onMappingUpdate?: () => void;
+}
+
+export default function ApiKeyMappingManager({ onMappingUpdate }: ApiKeyMappingManagerProps) {
   const [showForm, setShowForm] = useState(false);
   const [apiKeyId, setApiKeyId] = useState('');
   const [userName, setUserName] = useState('');
@@ -60,6 +64,11 @@ export default function ApiKeyMappingManager() {
         await loadMappings();
       }
 
+      // Trigger parent component refresh to update usage data with new mapping
+      if (onMappingUpdate) {
+        onMappingUpdate();
+      }
+
       // Clear success message after 5 seconds
       setTimeout(() => setSuccess(null), 5000);
     } catch (err) {
@@ -89,6 +98,12 @@ export default function ApiKeyMappingManager() {
 
       await loadMappings();
       setSuccess(`Successfully deleted mapping for ${keyId}`);
+
+      // Trigger parent component refresh
+      if (onMappingUpdate) {
+        onMappingUpdate();
+      }
+
       setTimeout(() => setSuccess(null), 5000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete mapping');

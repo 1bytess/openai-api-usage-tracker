@@ -4,11 +4,16 @@ import apiKeyMappings from './apiKeyMappings.json';
 // In-memory cache for API key mappings
 let cachedMappings: Record<string, string> | null = null;
 let lastFetchTime = 0;
-const CACHE_DURATION = 60000; // 1 minute cache
+const CACHE_DURATION = 30000; // 30 seconds cache (reduced for better UX)
 
 // Function to fetch API key mappings from the API
-async function fetchMappings(): Promise<Record<string, string>> {
+async function fetchMappings(forceRefresh = false): Promise<Record<string, string>> {
   try {
+    // Skip cache if force refresh
+    if (!forceRefresh && cachedMappings && (Date.now() - lastFetchTime) < CACHE_DURATION) {
+      return cachedMappings;
+    }
+
     const response = await fetch('/api/mappings', {
       cache: 'no-store'
     });
@@ -23,8 +28,13 @@ async function fetchMappings(): Promise<Record<string, string>> {
     console.error('Failed to fetch API key mappings:', error);
   }
 
-  // Fallback to static JSON file
-  return apiKeyMappings;
+  // Fallback to cached or static JSON file
+  return cachedMappings || apiKeyMappings;
+}
+
+// Force refresh mappings cache (called after adding/deleting mappings)
+export async function refreshMappingsCache(): Promise<void> {
+  await fetchMappings(true);
 }
 
 // Get mappings with caching
