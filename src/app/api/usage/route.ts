@@ -82,7 +82,7 @@ export async function GET(request: Request) {
       );
     }
 
-    const data = await response.json();
+    const data = await response.json() as { data?: unknown[]; next_page?: string };
 
     // If there's pagination and more data, fetch subsequent pages
     let allData = [...(data.data || [])];
@@ -106,7 +106,7 @@ export async function GET(request: Request) {
       });
 
       if (nextResponse.ok) {
-        const nextData = await nextResponse.json();
+        const nextData = await nextResponse.json() as { data?: unknown[]; next_page?: string };
         allData = [...allData, ...(nextData.data || [])];
         nextPage = nextData.next_page;
         pageCount++;

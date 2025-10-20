@@ -7,7 +7,11 @@
       "Bash(git commit:*)",
       "Bash(git push)",
       "Bash(git add:*)",
-      "Bash(if not exist \"public\" mkdir \"public\")"
+      "Bash(if not exist \"public\" mkdir \"public\")",
+      "Bash(npm run build:*)",
+      "Bash(wrangler kv:namespace:*)",
+      "Bash(wrangler kv namespace create:*)",
+      "Bash(npm install:*)"
     ],
     "deny": [],
     "ask": []

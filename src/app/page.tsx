@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { RefreshCw, AlertCircle, TrendingUp, Activity, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getUserName } from '@/lib/apiKeys';
+import ApiKeyMappingManager from '@/components/ApiKeyMappingManager';
 
 // TypeScript interfaces
 interface UsageResult {
@@ -154,7 +155,7 @@ export default function Home() {
       if (!userResponse.ok) {
         throw new Error('Failed to fetch user usage data');
       }
-      const userData = await userResponse.json();
+      const userData = await userResponse.json() as { data?: UsageBucket[] };
       setUsageData(userData.data || []);
 
       // Fetch data grouped by model (for tier tracking and model breakdown)
@@ -162,7 +163,7 @@ export default function Home() {
       if (!modelResponse.ok) {
         throw new Error('Failed to fetch model usage data');
       }
-      const modelDataResponse = await modelResponse.json();
+      const modelDataResponse = await modelResponse.json() as { data?: UsageBucket[] };
       setModelData(modelDataResponse.data || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -396,6 +397,9 @@ export default function Home() {
             </button>
           </div>
         </div>
+
+        {/* API Key Mapping Manager */}
+        <ApiKeyMappingManager />
 
         {/* Error Display */}
         {error && (

@@ -5,6 +5,16 @@ pages_build_output_dir = ".vercel/output/static"
 # Node.js compatibility for Next.js API routes
 compatibility_flags = ["nodejs_compat"]
 
+# KV Namespaces for API Key Mappings
+# Note: You need to create the KV namespace first:
+# 1. Run: wrangler kv:namespace create "API_KEY_MAPPINGS"
+# 2. Copy the ID from the output and replace <YOUR_KV_NAMESPACE_ID> below
+# 3. For preview: wrangler kv:namespace create "API_KEY_MAPPINGS" --preview
+[[kv_namespaces]]
+binding = "API_KEY_MAPPINGS"
+id = "b7f778e91ac54e1e8ffc1fa64cf50b09"
+preview_id = "fd9a30cd46d144099101da80979b8796"
+
 # Note: Environment variables and secrets should be set via Cloudflare Pages dashboard
 # Go to: Settings > Environment Variables
 # Add OPENAI_ADMIN_KEY as a Secret for both Production and Preview environments
