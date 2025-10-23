@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { fetchWithRetry } from "@/lib/fetchUtils";
 
 export const runtime = 'edge';
 
@@ -65,13 +66,23 @@ export async function GET(request: Request) {
       url += `&end_time=${endTime}`;
     }
 
-    const response = await fetch(url, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
+    const response = await fetchWithRetry(
+      url,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
       },
-    });
+      {
+        maxRetries: 3,
+        timeout: 15000,
+        onRetry: (attempt, error) => {
+          console.log(`Retry attempt ${attempt} for OpenAI API:`, error.message);
+        },
+      }
+    );
 
     if (!response.ok) {
       const errorData = await response.text();
@@ -97,13 +108,20 @@ export async function GET(request: Request) {
       }
       nextUrl += `${endTime ? `&end_time=${endTime}` : ""}&page=${nextPage}`;
 
-      const nextResponse = await fetch(nextUrl, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
+      const nextResponse = await fetchWithRetry(
+        nextUrl,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            "Content-Type": "application/json",
+          },
         },
-      });
+        {
+          maxRetries: 2,
+          timeout: 15000,
+        }
+      );
 
       if (nextResponse.ok) {
         const nextData = await nextResponse.json() as { data?: unknown[]; next_page?: string };

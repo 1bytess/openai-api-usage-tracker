@@ -5,6 +5,7 @@ import apiKeyMappings from './apiKeyMappings.json';
 let cachedMappings: Record<string, string> | null = null;
 let lastFetchTime = 0;
 const CACHE_DURATION = 30000; // 30 seconds cache (reduced for better UX)
+let fetchPromise: Promise<Record<string, string>> | null = null;
 
 // Function to fetch API key mappings from the API
 async function fetchMappings(forceRefresh = false): Promise<Record<string, string>> {
@@ -14,18 +15,44 @@ async function fetchMappings(forceRefresh = false): Promise<Record<string, strin
       return cachedMappings;
     }
 
-    const response = await fetch('/api/mappings', {
-      cache: 'no-store'
-    });
-
-    if (response.ok) {
-      const data = await response.json() as Record<string, string>;
-      cachedMappings = data;
-      lastFetchTime = Date.now();
-      return data;
+    // If a fetch is already in progress, wait for it
+    if (fetchPromise && !forceRefresh) {
+      return await fetchPromise;
     }
+
+    // Create new fetch promise
+    fetchPromise = (async () => {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+        const response = await fetch('/api/mappings', {
+          cache: 'no-store',
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+          const data = await response.json() as Record<string, string>;
+          cachedMappings = data;
+          lastFetchTime = Date.now();
+          return data;
+        }
+      } catch (error) {
+        console.error('Failed to fetch API key mappings:', error);
+      } finally {
+        fetchPromise = null;
+      }
+
+      // Fallback to cached or static JSON file
+      return cachedMappings || apiKeyMappings;
+    })();
+
+    return await fetchPromise;
   } catch (error) {
     console.error('Failed to fetch API key mappings:', error);
+    fetchPromise = null;
   }
 
   // Fallback to cached or static JSON file
@@ -57,7 +84,14 @@ export const getUserName = (apiKeyId?: string): string => {
   return mappings[apiKeyId || ''] || apiKeyId || 'Unknown User';
 };
 
-// Initialize cache on client side
+// Initialize cache on client side with better error handling
 if (typeof window !== 'undefined') {
-  fetchMappings();
+  // Pre-populate cache with static mappings immediately
+  cachedMappings = apiKeyMappings as Record<string, string>;
+  lastFetchTime = Date.now();
+
+  // Then fetch fresh mappings in the background
+  fetchMappings().catch((err) => {
+    console.warn('Initial mappings fetch failed, using fallback:', err);
+  });
 }

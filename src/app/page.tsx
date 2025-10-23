@@ -33,6 +33,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   const datePickerRef = useRef<HTMLDivElement>(null);
 
   // Default to today's date
@@ -140,9 +141,12 @@ export default function Home() {
     }
   };
 
-  const fetchUsage = async (forceCacheRefresh = false) => {
+  const fetchUsage = async (forceCacheRefresh = false, isAutoRetry = false) => {
     setLoading(true);
-    setError(null);
+    if (!isAutoRetry) {
+      setError(null);
+      setRetryCount(0);
+    }
 
     try {
       // If forceCacheRefresh is true, force reload mappings from API
@@ -163,23 +167,79 @@ export default function Home() {
       const startTime = Math.floor(date.setHours(0, 0, 0, 0) / 1000);
       const endTime = Math.floor(date.setHours(23, 59, 59, 999) / 1000);
 
+      let userDataFetched = false;
+      let modelDataFetched = false;
+      const fetchErrors: string[] = [];
+
       // Fetch data grouped by API key (for user tracking)
-      const userResponse = await fetch(`/api/usage?start_time=${startTime}&end_time=${endTime}`);
-      if (!userResponse.ok) {
-        throw new Error('Failed to fetch user usage data');
+      try {
+        const userResponse = await fetch(`/api/usage?start_time=${startTime}&end_time=${endTime}`, {
+          signal: AbortSignal.timeout(20000), // 20 second timeout
+        });
+        if (!userResponse.ok) {
+          throw new Error(`Failed to fetch user usage data (HTTP ${userResponse.status})`);
+        }
+        const userData = await userResponse.json() as { data?: UsageBucket[] };
+        setUsageData(userData.data || []);
+        userDataFetched = true;
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : 'Failed to fetch user data';
+        fetchErrors.push(errorMsg);
+        console.error('User data fetch error:', errorMsg);
       }
-      const userData = await userResponse.json() as { data?: UsageBucket[] };
-      setUsageData(userData.data || []);
 
       // Fetch data grouped by model (for tier tracking and model breakdown)
-      const modelResponse = await fetch(`/api/usage?start_time=${startTime}&end_time=${endTime}&group_by=model`);
-      if (!modelResponse.ok) {
-        throw new Error('Failed to fetch model usage data');
+      try {
+        const modelResponse = await fetch(`/api/usage?start_time=${startTime}&end_time=${endTime}&group_by=model`, {
+          signal: AbortSignal.timeout(20000), // 20 second timeout
+        });
+        if (!modelResponse.ok) {
+          throw new Error(`Failed to fetch model usage data (HTTP ${modelResponse.status})`);
+        }
+        const modelDataResponse = await modelResponse.json() as { data?: UsageBucket[] };
+        setModelData(modelDataResponse.data || []);
+        modelDataFetched = true;
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : 'Failed to fetch model data';
+        fetchErrors.push(errorMsg);
+        console.error('Model data fetch error:', errorMsg);
       }
-      const modelDataResponse = await modelResponse.json() as { data?: UsageBucket[] };
-      setModelData(modelDataResponse.data || []);
+
+      // If both failed, show error and try auto-retry
+      if (!userDataFetched && !modelDataFetched) {
+        const errorMessage = fetchErrors.join('; ');
+        setError(errorMessage);
+
+        // Auto-retry up to 2 times with exponential backoff
+        if (retryCount < 2) {
+          const delay = Math.min(2000 * Math.pow(2, retryCount), 8000);
+          console.log(`Auto-retrying in ${delay}ms (attempt ${retryCount + 1}/2)...`);
+          setTimeout(() => {
+            setRetryCount(prev => prev + 1);
+            fetchUsage(forceCacheRefresh, true);
+          }, delay);
+        }
+      } else if (fetchErrors.length > 0) {
+        // Partial success - show warning but don't retry
+        setError(`Warning: ${fetchErrors.join('; ')}. Showing partial data.`);
+      } else {
+        // Full success
+        setError(null);
+        setRetryCount(0);
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
+      setError(errorMessage);
+
+      // Auto-retry on unexpected errors
+      if (retryCount < 2) {
+        const delay = Math.min(2000 * Math.pow(2, retryCount), 8000);
+        console.log(`Auto-retrying in ${delay}ms (attempt ${retryCount + 1}/2)...`);
+        setTimeout(() => {
+          setRetryCount(prev => prev + 1);
+          fetchUsage(forceCacheRefresh, true);
+        }, delay);
+      }
     } finally {
       setLoading(false);
     }
