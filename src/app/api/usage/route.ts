@@ -39,6 +39,16 @@ export async function GET(request: Request) {
   const cfEnv = await getCloudflareEnv();
   const apiKey = cfEnv?.OPENAI_ADMIN_KEY ?? process.env.OPENAI_ADMIN_KEY;
 
+  // Debug logging (only logs if key is missing or masked)
+  console.log('Environment check:', {
+    hasCfEnv: !!cfEnv,
+    hasCfEnvKey: !!cfEnv?.OPENAI_ADMIN_KEY,
+    hasProcessEnvKey: !!process.env.OPENAI_ADMIN_KEY,
+    isCfPages: !!process.env.CF_PAGES,
+    hasApiKey: !!apiKey,
+    apiKeyPrefix: apiKey ? apiKey.substring(0, 7) + '...' : 'missing'
+  });
+
   if (!apiKey) {
     return NextResponse.json(
       { error: "OPENAI_ADMIN_KEY not configured" },
@@ -86,9 +96,22 @@ export async function GET(request: Request) {
 
     if (!response.ok) {
       const errorData = await response.text();
-      console.error("OpenAI API Error:", errorData);
+      console.error("OpenAI API Error:", {
+        status: response.status,
+        statusText: response.statusText,
+        url: url,
+        response: errorData,
+        apiKeyPrefix: apiKey.substring(0, 7) + '...'
+      });
       return NextResponse.json(
-        { error: "Failed to fetch usage data from OpenAI", details: errorData },
+        {
+          error: "Failed to fetch usage data from OpenAI",
+          details: errorData,
+          status: response.status,
+          hint: response.status === 403
+            ? "Check that OPENAI_ADMIN_KEY is correctly set in Cloudflare Pages > Settings > Environment Variables for Production environment"
+            : undefined
+        },
         { status: response.status }
       );
     }
