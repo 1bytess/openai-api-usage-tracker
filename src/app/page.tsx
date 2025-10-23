@@ -34,6 +34,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+  const [mappingsLoaded, setMappingsLoaded] = useState(false);
   const datePickerRef = useRef<HTMLDivElement>(null);
 
   // Default to today's date
@@ -246,16 +247,36 @@ export default function Home() {
   };
 
   const handleMappingUpdate = async () => {
-    // Force refresh mappings cache
+    // Force refresh mappings cache and wait for it to complete
     await refreshMappingsCache();
+    // Small delay to ensure cache is fully updated
+    await new Promise(resolve => setTimeout(resolve, 100));
     // Reload usage data to show updated user names
-    fetchUsage(true);
+    await fetchUsage(true);
   };
 
+  // Load mappings on initial mount
   useEffect(() => {
-    fetchUsage();
+    const loadMappings = async () => {
+      try {
+        await refreshMappingsCache();
+      } catch (err) {
+        console.warn('Failed to load initial mappings:', err);
+      } finally {
+        setMappingsLoaded(true);
+      }
+    };
+
+    loadMappings();
+  }, []);
+
+  // Fetch usage data when date changes or mappings are loaded
+  useEffect(() => {
+    if (mappingsLoaded) {
+      fetchUsage();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDate]);
+  }, [selectedDate, mappingsLoaded]);
 
   // Close date picker when clicking outside
   useEffect(() => {

@@ -86,12 +86,11 @@ export const getUserName = (apiKeyId?: string): string => {
 
 // Initialize cache on client side with better error handling
 if (typeof window !== 'undefined') {
-  // Pre-populate cache with static mappings immediately
-  cachedMappings = apiKeyMappings as Record<string, string>;
-  lastFetchTime = Date.now();
+  // Don't pre-populate cache - let the page component load mappings first
+  // This ensures we always fetch fresh mappings from KV on page load
 
-  // Then fetch fresh mappings in the background
+  // Optionally fetch in background as fallback
   fetchMappings().catch((err) => {
-    console.warn('Initial mappings fetch failed, using fallback:', err);
+    console.warn('Background mappings fetch failed, will use fallback when needed:', err);
   });
 }
